@@ -1,0 +1,398 @@
+openapi: 3.0.3
+info:
+  title: Task Tracker API
+  version: "1.0.0"
+  description: |
+    Backend API для системы отслеживания задач.
+    - Пользователь: name, login, email, avatar
+    - Задача: title, description, is_completed, user_id
+servers:
+  - url: http://localhost:3000
+    description: Local server
+
+tags:
+  - name: Users
+    description: Операции с пользователями
+  - name: Tasks
+    description: Операции с задачами
+
+paths:
+  /api/users:
+    get:
+      tags: [Users]
+      summary: Список всех пользователей
+      responses:
+        "200":
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      tags: [Users]
+      summary: Создать пользователя (опционально загрузить avatar)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                login:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                avatar:
+                  type: string
+                  format: binary
+              required:
+                - name
+                - login
+                - email
+      responses:
+        "201":
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Некорректные данные
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Логин или email уже заняты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/userId"
+    get:
+      tags: [Users]
+      summary: Получить пользователя по id
+      responses:
+        "200":
+          description: Пользователь найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Users]
+      summary: Обновить пользователя (опционально загрузить новый avatar)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                login:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                avatar:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Пользователь обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Некорректные данные
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Конфликт (login/email уже заняты)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Users]
+      summary: Удалить пользователя
+      responses:
+        "200":
+          description: Успешно удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "404":
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/tasks:
+    get:
+      tags: [Tasks]
+      summary: Список задач (опционально фильтр по user_id)
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          description: Фильтровать задачи по владельцу
+      responses:
+        "200":
+          description: Список задач
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      tags: [Tasks]
+      summary: Создать задачу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                title:
+                  type: string
+                description:
+                  type: string
+                is_completed:
+                  type: boolean
+              required:
+                - user_id
+                - title
+      responses:
+        "201":
+          description: Задача создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Некорректные данные (например user not found)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/tasks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/taskId"
+    get:
+      tags: [Tasks]
+      summary: Получить задачу по id
+      responses:
+        "200":
+          description: Задача найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Задача не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Tasks]
+      summary: Обновить задачу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                title:
+                  type: string
+                description:
+                  type: string
+                is_completed:
+                  type: boolean
+      responses:
+        "200":
+          description: Задача обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Некорректные данные
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Задача или новый пользователь не найдены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Tasks]
+      summary: Удалить задачу
+      responses:
+        "200":
+          description: Успешно удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "404":
+          description: Задача не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    userId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID пользователя
+    taskId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID задачи
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Ivan Ivanov
+        login:
+          type: string
+          example: ivan
+        email:
+          type: string
+          example: ivan@example.com
+        avatar:
+          type: string
+          description: Имя файла аватара (доступно по /static/<filename>)
+          example: 169x123_avatar.png
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-05T12:00:00Z"
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10
+        user_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Сделать отчет"
+        description:
+          type: string
+          example: "Подготовить отчёт по проекту до пятницы"
+        is_completed:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-05T12:05:00Z"
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "User not found"
+
+  requestBodies:
+    UserMultipart:
+      description: Данные пользователя (multipart/form-data)
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              login:
+                type: string
+              email:
+                type: string
+                format: email
+              avatar:
+                type: string
+                format: binary
+            required:
+              - name
+              - login
+              - email
+
+security: [] # без аутентификации (добавь securitySchemes при необходимости)
