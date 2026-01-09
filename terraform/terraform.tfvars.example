@@ -1,0 +1,28 @@
+cloud_id  = "b1g1234567890abcdef"
+folder_id = "b1g0987654321fedcba"
+zone      = "ru-central1-a"
+
+project_name = "todo-app"
+
+# Docker image from Container Registry
+app_image = "cr.yandex/crp1234567890abcdef/todo-app:latest"
+
+# PostgreSQL settings
+database_user     = "todo_user"
+database_password = "YourSecurePassword123!"
+database_name     = "todo_db"
+
+# VM settings
+vm_user = "ubuntu"
+vm_ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... your_email@example.com"
+
+# VM resources
+vm_cores     = 2
+vm_memory    = 4
+vm_disk_size = 20
+
+# Object Storage
+object_storage_bucket_name = "todo-app-static-files-unique-suffix"
+
+# Number of VM instances
+vm_count = 2
