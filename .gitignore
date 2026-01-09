@@ -3,3 +3,9 @@ static
 .env
 package-lock.json
 docs
+
+# Terraform state files (contain secrets!)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
