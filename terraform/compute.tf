@@ -49,20 +49,66 @@ resource "yandex_compute_instance" "vm" {
                 "max-file": "3"
               }
             }
+        - path: /tmp/init_db.sql
+          content: |
+            CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            login VARCHAR(100) NOT NULL UNIQUE,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            avatar VARCHAR(1024),
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (now())
+            );
+
+            CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            is_completed BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (now())
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
       
       runcmd:
         - apt-get update
-        - apt-get install -y docker.io docker-compose
+        - apt-get install -y docker.io docker-compose jq postgresql-client
         - systemctl enable docker
         - systemctl start docker
         - usermod -aG docker ${var.vm_user}
         - |
-          # Установка yc CLI для аутентификации в Container Registry
-          curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
-          /root/yandex-cloud/bin/yc container registry configure-docker || true
+          # Настройка аутентификации Docker для Yandex Container Registry через IAM токен
+          export HOME=/root
+          TOKEN=$(curl -s -H "Metadata-Flavor: Google" "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token" | jq -r '.access_token')
+          echo "$TOKEN" | docker login cr.yandex -u "iam" --password-stdin
         - |
           # Ожидание готовности PostgreSQL
-          sleep 60
+          sleep 90
+        - |
+          # Инициализация схемы базы данных (только на первой VM, чтобы не создавать таблицы дважды)
+          VM_INDEX="${count.index}"
+          if [ "$VM_INDEX" = "0" ]; then
+            echo "Initializing database schema on VM-1..."
+            # Проверка готовности PostgreSQL
+            for i in {1..30}; do
+              if PGPASSWORD='${var.database_password}' psql -h ${yandex_mdb_postgresql_cluster.postgres-1.host[0].fqdn} -p 6432 -U ${var.database_user} -d ${var.database_name} -c "SELECT 1;" > /dev/null 2>&1; then
+                echo "PostgreSQL is ready"
+                break
+              fi
+              echo "Waiting for PostgreSQL... ($i/30)"
+              sleep 5
+            done
+            # Выполнение SQL скрипта
+            PGPASSWORD='${var.database_password}' psql \
+              -h ${yandex_mdb_postgresql_cluster.postgres-1.host[0].fqdn} \
+              -p 6432 \
+              -U ${var.database_user} \
+              -d ${var.database_name} \
+              -f /tmp/init_db.sql \
+              || echo "Database schema might already be initialized"
+            echo "Database schema initialization completed"
+          fi
         - |
           # Запуск Docker контейнера
           docker run -d \

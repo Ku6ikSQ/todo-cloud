@@ -22,3 +22,15 @@ output "object_storage_bucket" {
   description = "Object Storage bucket name"
   value       = yandex_storage_bucket.static-files.bucket
 }
+
+output "storage_access_key_id" {
+  description = "Object Storage access key ID"
+  value       = yandex_iam_service_account_static_access_key.storage-sa-key.access_key
+  sensitive   = false
+}
+
+output "storage_secret_key" {
+  description = "Object Storage secret key"
+  value       = yandex_iam_service_account_static_access_key.storage-sa-key.secret_key
+  sensitive   = true
+}
