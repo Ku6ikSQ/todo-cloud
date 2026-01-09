@@ -2,10 +2,9 @@ cloud_id  = "b1g4gsvjs6bvgfsitu74"
 folder_id = "b1gk1c6nocmhh7mbsu6v"
 zone      = "ru-central1-a"
 
-project_name = "todo-app"
+project_name = "todo-app-v2"
 
-# Docker image from Container Registry (пока placeholder, будет создан позже)
-app_image = "cr.yandex/crp2l2c6dnd3m4ufdt95/todo-app:latest"
+app_image = "cr.yandex/crpee4i09ti7nmlm52no/todo-app:latest"
 
 # PostgreSQL settings
 database_user     = "todo_user"
@@ -22,7 +21,7 @@ vm_memory    = 4
 vm_disk_size = 20
 
 # Object Storage (имя должно быть уникальным глобально)
-object_storage_bucket_name = "todo-app-static-files"  # Или задайте уникальное имя вручную
+object_storage_bucket_name = "todo-app-v2-static-files-20250109"
 
 # Number of VM instances
 vm_count = 2
