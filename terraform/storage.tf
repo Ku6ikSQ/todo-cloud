@@ -30,4 +30,10 @@ resource "yandex_storage_bucket" "static-files" {
     expose_headers  = ["ETag"]
     max_age_seconds = 3600
   }
+
+  depends_on = [
+    yandex_iam_service_account.storage-sa,
+    yandex_iam_service_account_static_access_key.storage-sa-key,
+    yandex_resourcemanager_folder_iam_member.storage-sa-editor
+  ]
 }
